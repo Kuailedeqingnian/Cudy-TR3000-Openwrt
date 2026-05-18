@@ -61,10 +61,6 @@ jobs:
     grep -E "luci|argon|passwall|firewall4|nftables|usb-net" .config || true
     echo "Config check finished."
 
-      - name: Upload firmware
-        uses: actions/upload-artifact@v4
-        with:
-          name: Cudy TR3000-OpenWrt-24.10.6-512MB-V2
-          path: |
+      
             openwrt/bin/targets/mediatek/filogic/*.bin
             openwrt/bin/targets/mediatek/filogic/*.manifest
