@@ -51,10 +51,15 @@ jobs:
           cd openwrt
           make defconfig
 
-      - name: Build firmware
-        run: |
-          cd openwrt
-          make -j$(nproc) || make -j1 V=s
+     - name: Check config only
+  run: |
+    cd openwrt
+    echo "===== BEFORE DEFCONFIG ====="
+    grep -E "luci|argon|passwall|firewall4|nftables|usb-net" .config || true
+    make defconfig
+    echo "===== AFTER DEFCONFIG ====="
+    grep -E "luci|argon|passwall|firewall4|nftables|usb-net" .config || true
+    echo "Config check finished."
 
       - name: Upload firmware
         uses: actions/upload-artifact@v4
