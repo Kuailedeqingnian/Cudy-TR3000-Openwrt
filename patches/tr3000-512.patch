@@ -1,1 +1,11 @@
-# TR3000 512MB patch placeholder
+diff --git a/target/linux/mediatek/dts/mt7981b-cudy-tr3000-v1.dts b/target/linux/mediatek/dts/mt7981b-cudy-tr3000-v1.dts
+index 0000000000..1111111111 100644
+--- a/target/linux/mediatek/dts/mt7981b-cudy-tr3000-v1.dts
++++ b/target/linux/mediatek/dts/mt7981b-cudy-tr3000-v1.dts
+@@ -23,5 +23,5 @@ &spi_nand {
+ };
+ 
+ &ubi {
+-	reg = <0x5c0000 0x4000000>;
++	reg = <0x5c0000 0x1f000000>;
+ };
