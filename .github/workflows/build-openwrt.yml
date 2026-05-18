@@ -30,10 +30,7 @@ jobs:
           cp -r patches openwrt/patches_custom
 
       - name: Update feeds
-      - name: Load custom configuration
-  run: |
-    cp .config openwrt/.config
-        run: |
+    run: |
           cd openwrt
           ./scripts/feeds update -a
           ./scripts/feeds install -a
