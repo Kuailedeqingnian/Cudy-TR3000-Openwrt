@@ -3,6 +3,9 @@ name: Build OpenWrt
 on:
   workflow_dispatch:
 
+env:
+  VERSION: "26.05.19-r${{ github.run_number }}"
+
 jobs:
   build:
     runs-on: ubuntu-22.04
@@ -102,7 +105,7 @@ jobs:
       - name: Upload firmware
         uses: actions/upload-artifact@v4
         with:
-          name: Cudy-TR3000-OpenWrt-24.10.6-512MB-Argon-WiFi-Cache-V5
+          name: Cudy-TR3000-OpenWrt-24.10.6-512MB-${{ env.VERSION }}
           path: |
             openwrt/bin/targets/mediatek/filogic/*.bin
             openwrt/bin/targets/mediatek/filogic/*.manifest
