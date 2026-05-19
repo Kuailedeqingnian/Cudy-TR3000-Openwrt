@@ -89,10 +89,14 @@ jobs:
           grep -q '^CONFIG_PACKAGE_luci-base=y' .config
           grep -q '^CONFIG_PACKAGE_luci-theme-argon=y' .config
           grep -q '^CONFIG_PACKAGE_luci-app-argon-config=y' .config
+          grep -q '^CONFIG_PACKAGE_luci-app-passwall=y' .config
+          grep -q '^CONFIG_PACKAGE_sing-box=y' .config
+          grep -q '^CONFIG_PACKAGE_v2ray-geodata=y' .config
+          grep -q '^CONFIG_PACKAGE_geoview=y' .config
           grep -q '^CONFIG_PACKAGE_kmod-usb-net-rndis=y' .config
           grep -q '^CONFIG_PACKAGE_kmod-usb-net-cdc-mbim=y' .config
           grep -q '^CONFIG_PACKAGE_kmod-usb-net-qmi-wwan=y' .config
-          echo "LuCI, Argon and USB network config confirmed."
+          echo "LuCI, Argon, PassWall, sing-box and USB network config confirmed."
 
       - name: Build firmware with cache
         run: |
@@ -105,7 +109,7 @@ jobs:
       - name: Upload firmware
         uses: actions/upload-artifact@v4
         with:
-          name: Cudy-TR3000-OpenWrt-24.10.6-512MB-${{ env.VERSION }}
+          name: Cudy-TR3000-OpenWrt-24.10.6-512MB-PassWall-${{ env.VERSION }}
           path: |
             openwrt/bin/targets/mediatek/filogic/*.bin
             openwrt/bin/targets/mediatek/filogic/*.manifest
