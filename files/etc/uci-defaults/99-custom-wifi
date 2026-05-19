@@ -1,16 +1,36 @@
 #!/bin/sh
 
-uci set wireless.default_radio0.ssid='Cudy TR3000'
-uci set wireless.default_radio0.key='12345678'
-uci set wireless.default_radio0.encryption='psk2'
+# 按频段自动设置 Wi-Fi，避免 radio0/radio1 顺序反了
 
-uci set wireless.default_radio1.ssid='Cudy TR3000-5G'
-uci set wireless.default_radio1.key='12345678'
-uci set wireless.default_radio1.encryption='psk2'
+for radio in $(uci show wireless | grep "=wifi-device" | cut -d. -f2 | cut -d= -f1); do
+    band="$(uci -q get wireless.$radio.band)"
 
-uci set wireless.default_radio0.disabled='0'
-uci set wireless.default_radio1.disabled='0'
+    # 找到这个 radio 对应的第一个 wifi-iface
+    iface="$(uci show wireless | grep ".device='$radio'" | head -n1 | cut -d. -f2 | cut -d= -f1)"
+
+    [ -z "$iface" ] && continue
+
+    # 2.4G
+    if [ "$band" = "2g" ]; then
+        uci set wireless.$iface.ssid='Cudy TR3000'
+        uci set wireless.$iface.encryption='psk2'
+        uci set wireless.$iface.key='12345678'
+        uci set wireless.$iface.disabled='0'
+        uci set wireless.$radio.disabled='0'
+    fi
+
+    # 5G
+    if [ "$band" = "5g" ]; then
+        uci set wireless.$iface.ssid='Cudy TR3000-5G'
+        uci set wireless.$iface.encryption='psk2'
+        uci set wireless.$iface.key='12345678'
+        uci set wireless.$iface.disabled='0'
+        uci set wireless.$radio.disabled='0'
+    fi
+done
 
 uci commit wireless
+
+rm -f /etc/uci-defaults/99-custom-wifi
 
 exit 0
