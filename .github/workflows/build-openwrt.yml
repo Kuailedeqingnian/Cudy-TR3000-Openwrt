@@ -8,15 +8,29 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/hostedtoolcache
+          docker image prune -a -f
+          df -h
+
       - name: Checkout control repo
         uses: actions/checkout@v4
 
       - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential clang flex bison g++ gawk gcc-multilib g++-multilib gettext git libncurses5-dev libssl-dev python3-distutils python3-setuptools rsync unzip zlib1g-dev file wget curl
+          sudo apt-get install -y \
+          build-essential clang flex bison g++ gawk \
+          gcc-multilib g++-multilib gettext git \
+          libncurses5-dev libssl-dev \
+          python3-setuptools rsync unzip \
+          zlib1g-dev file wget curl
 
-      - name: Clone OpenWrt 24.10.6
+      - name: Clone OpenWrt
         run: |
           git clone https://github.com/openwrt/openwrt.git openwrt
           cd openwrt
@@ -25,6 +39,7 @@ jobs:
       - name: Copy custom files
         run: |
           cp feeds.conf.default openwrt/feeds.conf.default
+          cp .config openwrt/.config
           cp diy.sh openwrt/diy.sh
           cp -r patches openwrt/patches_custom
 
@@ -34,20 +49,16 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
-      - name: Apply 512MB patch
+      - name: Apply patch
         run: |
           cd openwrt
           git apply patches_custom/tr3000-512.patch
 
-      - name: Run DIY script
+      - name: Run DIY
         run: |
           cd openwrt
           chmod +x diy.sh
           ./diy.sh
-
-      - name: Load custom config
-        run: |
-          cp .config openwrt/.config
 
       - name: Make defconfig
         run: |
