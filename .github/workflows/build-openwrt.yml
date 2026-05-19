@@ -87,6 +87,8 @@ jobs:
           cd openwrt
           make defconfig
 
+          MISSING=0
+
           check_pkg() {
             PKG="$1"
 
@@ -94,24 +96,33 @@ jobs:
               echo "✅ ${PKG} found"
             else
               echo "❌ ${PKG} missing"
-              exit 1
+              MISSING=1
             fi
           }
 
-          echo "========== Checking packages =========="
-
+          echo "========== Checking basic LuCI / Argon =========="
           check_pkg luci-base
           check_pkg luci-theme-argon
           check_pkg luci-app-argon-config
 
+          echo "========== Checking PassWall =========="
           check_pkg luci-app-passwall
+          check_pkg luci-i18n-passwall-zh-cn
           check_pkg sing-box
           check_pkg v2ray-geodata
           check_pkg geoview
 
+          echo "========== Checking USB network =========="
           check_pkg kmod-usb-net-rndis
           check_pkg kmod-usb-net-cdc-mbim
           check_pkg kmod-usb-net-qmi-wwan
+
+          echo "========== Checking result =========="
+
+          if [ "$MISSING" -eq 1 ]; then
+            echo "❌ Some required packages are missing. Stop here to avoid wasting build time."
+            exit 1
+          fi
 
           echo "✅ All required packages confirmed."
 
