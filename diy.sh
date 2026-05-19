@@ -3,10 +3,13 @@ set -e
 
 echo "DIY script start..."
 
-# 加入 Argon 主题和配置插件
-rm -rf package/luci-theme-argon package/luci-app-argon-config
-git clone --depth=1 https://github.com/jerrykuku/luci-theme-argon.git package/luci-theme-argon
-git clone --depth=1 https://github.com/jerrykuku/luci-app-argon-config.git package/luci-app-argon-config
+# 加入 Argon 主题
+rm -rf package/custom/luci-theme-argon
+rm -rf package/custom/luci-app-argon-config
+mkdir -p package/custom
+
+git clone --depth=1 https://github.com/jerrykuku/luci-theme-argon.git package/custom/luci-theme-argon
+git clone --depth=1 https://github.com/jerrykuku/luci-app-argon-config.git package/custom/luci-app-argon-config
 
 # 默认 IP 改为 192.168.2.1
 sed -i 's/192.168.1.1/192.168.2.1/g' package/base-files/files/bin/config_generate
@@ -20,7 +23,7 @@ sed -i 's#^root:[^:]*:#root::#' package/base-files/files/etc/shadow
 # 删除 picoclaw
 find package feeds -iname '*picoclaw*' -exec rm -rf {} + || true
 
-# 设置默认 Argon 主题
+# 默认使用 Argon 主题
 mkdir -p files/etc/uci-defaults
 cat > files/etc/uci-defaults/99-default-argon <<'EOF'
 #!/bin/sh
