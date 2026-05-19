@@ -86,17 +86,34 @@ jobs:
         run: |
           cd openwrt
           make defconfig
-          grep -q '^CONFIG_PACKAGE_luci-base=y' .config
-          grep -q '^CONFIG_PACKAGE_luci-theme-argon=y' .config
-          grep -q '^CONFIG_PACKAGE_luci-app-argon-config=y' .config
-          grep -q '^CONFIG_PACKAGE_luci-app-passwall=y' .config
-          grep -q '^CONFIG_PACKAGE_sing-box=y' .config
-          grep -q '^CONFIG_PACKAGE_v2ray-geodata=y' .config
-          grep -q '^CONFIG_PACKAGE_geoview=y' .config
-          grep -q '^CONFIG_PACKAGE_kmod-usb-net-rndis=y' .config
-          grep -q '^CONFIG_PACKAGE_kmod-usb-net-cdc-mbim=y' .config
-          grep -q '^CONFIG_PACKAGE_kmod-usb-net-qmi-wwan=y' .config
-          echo "LuCI, Argon, PassWall, sing-box and USB network config confirmed."
+
+          check_pkg() {
+            PKG="$1"
+
+            if grep -q "^CONFIG_PACKAGE_${PKG}=y" .config; then
+              echo "✅ ${PKG} found"
+            else
+              echo "❌ ${PKG} missing"
+              exit 1
+            fi
+          }
+
+          echo "========== Checking packages =========="
+
+          check_pkg luci-base
+          check_pkg luci-theme-argon
+          check_pkg luci-app-argon-config
+
+          check_pkg luci-app-passwall
+          check_pkg sing-box
+          check_pkg v2ray-geodata
+          check_pkg geoview
+
+          check_pkg kmod-usb-net-rndis
+          check_pkg kmod-usb-net-cdc-mbim
+          check_pkg kmod-usb-net-qmi-wwan
+
+          echo "✅ All required packages confirmed."
 
       - name: Build firmware with cache
         run: |
