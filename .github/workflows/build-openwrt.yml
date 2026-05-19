@@ -107,9 +107,7 @@ jobs:
 
           echo "========== Checking PassWall =========="
           check_pkg luci-app-passwall
-          check_pkg luci-i18n-passwall-zh-cn
           check_pkg sing-box
-          check_pkg v2ray-geodata
           check_pkg geoview
 
           echo "========== Checking USB network =========="
