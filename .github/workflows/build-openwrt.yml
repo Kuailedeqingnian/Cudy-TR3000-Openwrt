@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 env:
-  VERSION: "26.05.20-r${{ github.run_number }}"
+  VERSION: "26.05.21-r${{ github.run_number }}"
 
 jobs:
   build:
