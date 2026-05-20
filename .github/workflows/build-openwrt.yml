@@ -129,7 +129,7 @@ jobs:
           cd openwrt
           export CCACHE_DIR="$PWD/.ccache"
           ccache -M 5G
-          make -j$(nproc) CCACHE=1 || make -j1 V=s CCACHE=1
+          make -j$(nproc) CCACHE=1
           ccache -s
 
       - name: Upload firmware
