@@ -107,7 +107,6 @@ jobs:
           check_pkg luci-app-argon-config
           check_pkg luci-app-passwall
           check_pkg sing-box
-          check_pkg geoview
           check_pkg kmod-usb-net-rndis
           check_pkg kmod-usb-net-cdc-mbim
           check_pkg kmod-usb-net-qmi-wwan
