@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 env:
-  VERSION: "26.05.19-r${{ github.run_number }}"
+  VERSION: "26.05.20-r${{ github.run_number }}"
 
 jobs:
   build:
@@ -94,18 +94,30 @@ jobs:
 
           check_pkg() {
             PKG="$1"
-            grep -q "^CONFIG_PACKAGE_${PKG}=y" .config \
-            && echo "✅ ${PKG}" \
-            || { echo "❌ ${PKG}"; MISSING=1; }
+            if grep -q "^CONFIG_PACKAGE_${PKG}=y" .config; then
+              echo "✅ ${PKG}"
+            else
+              echo "❌ ${PKG}"
+              MISSING=1
+            fi
           }
 
           check_pkg luci-base
           check_pkg luci-theme-argon
+          check_pkg luci-app-argon-config
           check_pkg luci-app-passwall
           check_pkg sing-box
           check_pkg geoview
+          check_pkg kmod-usb-net-rndis
+          check_pkg kmod-usb-net-cdc-mbim
+          check_pkg kmod-usb-net-qmi-wwan
 
-          [ "$MISSING" -eq 1 ] && exit 1
+          if [ "$MISSING" -eq 1 ]; then
+            echo "❌ Some required packages are missing."
+            exit 1
+          fi
+
+          echo "✅ All required packages confirmed."
 
       - name: Build firmware with cache
         run: |
