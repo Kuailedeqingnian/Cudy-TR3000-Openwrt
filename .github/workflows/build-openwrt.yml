@@ -12,7 +12,6 @@ jobs:
     timeout-minutes: 355
 
     steps:
-
       - name: Free disk space
         run: |
           sudo rm -rf /usr/share/dotnet
@@ -38,22 +37,16 @@ jobs:
           git clone https://github.com/openwrt/openwrt.git openwrt
           cd openwrt
           git checkout v24.10.6
-          mkdir -p dl .ccache staging_dir
+          mkdir -p dl .ccache
 
       - name: Restore download cache
         uses: actions/cache@v4
         with:
           path: openwrt/dl
           key: openwrt-dl-24.10.6-mediatek-filogic
-
-      - name: Restore toolchain cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            openwrt/staging_dir
-            openwrt/build_dir/host
-            openwrt/build_dir/toolchain-*
-          key: openwrt-toolchain-24.10.6-mediatek-filogic
+          restore-keys: |
+            openwrt-dl-24.10.6-
+            openwrt-dl-
 
       - name: Restore ccache
         uses: actions/cache@v4
@@ -62,6 +55,7 @@ jobs:
           key: openwrt-ccache-24.10.6-mediatek-filogic
           restore-keys: |
             openwrt-ccache-24.10.6-
+            openwrt-ccache-
 
       - name: Copy custom files
         run: |
@@ -116,16 +110,11 @@ jobs:
       - name: Build firmware with cache
         run: |
           cd openwrt
-
           export CCACHE_DIR="$PWD/.ccache"
-
           ccache -M 10G
           ccache -z
-
           make download -j$(nproc)
-
           make -j$(nproc) CCACHE=1
-
           ccache -s
 
       - name: Upload firmware
