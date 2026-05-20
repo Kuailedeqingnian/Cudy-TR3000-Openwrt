@@ -9,8 +9,10 @@ env:
 jobs:
   build:
     runs-on: ubuntu-22.04
+    timeout-minutes: 355
 
     steps:
+
       - name: Free disk space
         run: |
           sudo rm -rf /usr/share/dotnet
@@ -26,33 +28,40 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential clang flex bison g++ gawk gcc-multilib g++-multilib gettext git libncurses5-dev libssl-dev python3-setuptools rsync unzip zlib1g-dev file wget curl ccache
+          sudo apt-get install -y \
+          build-essential clang flex bison g++ gawk gcc-multilib \
+          g++-multilib gettext git libncurses5-dev libssl-dev \
+          python3-setuptools rsync unzip zlib1g-dev file wget curl ccache
 
-      - name: Clone OpenWrt 24.10.6
+      - name: Clone OpenWrt
         run: |
           git clone https://github.com/openwrt/openwrt.git openwrt
           cd openwrt
           git checkout v24.10.6
-          mkdir -p dl .ccache
+          mkdir -p dl .ccache staging_dir
 
       - name: Restore download cache
         uses: actions/cache@v4
         with:
           path: openwrt/dl
           key: openwrt-dl-24.10.6-mediatek-filogic
-          restore-keys: |
-            openwrt-dl-24.10.6-
-            openwrt-dl-
+
+      - name: Restore toolchain cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            openwrt/staging_dir
+            openwrt/build_dir/host
+            openwrt/build_dir/toolchain-*
+          key: openwrt-toolchain-24.10.6-mediatek-filogic
 
       - name: Restore ccache
         uses: actions/cache@v4
         with:
           path: openwrt/.ccache
-          key: openwrt-ccache-24.10.6-mediatek-filogic-${{ github.run_number }}
+          key: openwrt-ccache-24.10.6-mediatek-filogic
           restore-keys: |
-            openwrt-ccache-24.10.6-mediatek-filogic-
             openwrt-ccache-24.10.6-
-            openwrt-ccache-
 
       - name: Copy custom files
         run: |
@@ -91,51 +100,38 @@ jobs:
 
           check_pkg() {
             PKG="$1"
-
-            if grep -q "^CONFIG_PACKAGE_${PKG}=y" .config; then
-              echo "✅ ${PKG} found"
-            else
-              echo "❌ ${PKG} missing"
-              MISSING=1
-            fi
+            grep -q "^CONFIG_PACKAGE_${PKG}=y" .config \
+            && echo "✅ ${PKG}" \
+            || { echo "❌ ${PKG}"; MISSING=1; }
           }
 
-          echo "========== Checking basic LuCI / Argon =========="
           check_pkg luci-base
           check_pkg luci-theme-argon
-          check_pkg luci-app-argon-config
-
-          echo "========== Checking PassWall =========="
           check_pkg luci-app-passwall
           check_pkg sing-box
           check_pkg geoview
 
-          echo "========== Checking USB network =========="
-          check_pkg kmod-usb-net-rndis
-          check_pkg kmod-usb-net-cdc-mbim
-          check_pkg kmod-usb-net-qmi-wwan
-
-          echo "========== Checking result =========="
-
-          if [ "$MISSING" -eq 1 ]; then
-            echo "❌ Some required packages are missing. Stop here to avoid wasting build time."
-            exit 1
-          fi
-
-          echo "✅ All required packages confirmed."
+          [ "$MISSING" -eq 1 ] && exit 1
 
       - name: Build firmware with cache
         run: |
           cd openwrt
+
           export CCACHE_DIR="$PWD/.ccache"
-          ccache -M 5G
+
+          ccache -M 10G
+          ccache -z
+
+          make download -j$(nproc)
+
           make -j$(nproc) CCACHE=1
+
           ccache -s
 
       - name: Upload firmware
         uses: actions/upload-artifact@v4
         with:
-          name: Cudy-TR3000-OpenWrt-24.10.6-512MB-PassWall-${{ env.VERSION }}
+          name: Cudy-TR3000-OpenWrt-${{ env.VERSION }}
           path: |
             openwrt/bin/targets/mediatek/filogic/*.bin
             openwrt/bin/targets/mediatek/filogic/*.manifest
