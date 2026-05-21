@@ -1,4 +1,4 @@
-name: Diagnose sing-box V2
+name: Diagnose sing-box V3
 
 on:
   workflow_dispatch:
@@ -117,7 +117,7 @@ jobs:
 
           echo "✅ Config check passed."
 
-      - name: Prepare tools and toolchain
+      - name: Prepare tools toolchain and kernel
         run: |
           cd openwrt
 
@@ -135,8 +135,14 @@ jobs:
           echo "===== INSTALL TOOLCHAIN ====="
           make toolchain/install -j4
 
+          echo "===== PREPARE KERNEL CONFIG ====="
+          make target/linux/prepare -j4
+
           echo "===== COMPILE LIBS TOOLCHAIN ====="
           make package/libs/toolchain/compile -j1 V=s
+
+          echo "===== COMPILE GPIO BUTTON HOTPLUG ====="
+          make package/kernel/gpio-button-hotplug/compile -j1 V=s
 
       - name: Diagnose sing-box build
         run: |
