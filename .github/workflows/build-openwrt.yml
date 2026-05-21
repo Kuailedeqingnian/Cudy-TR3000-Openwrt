@@ -147,9 +147,11 @@ jobs:
           make download -j4
 
           echo "===== START NORMAL BUILD ====="
-          make -j4 CCACHE=1
 
+          set +e
+          make -j4 CCACHE=1
           BUILD_RESULT=$?
+          set -e
 
           if [ "$BUILD_RESULT" -ne 0 ]; then
             echo "===== NORMAL BUILD FAILED ====="
