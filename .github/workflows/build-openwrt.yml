@@ -85,10 +85,28 @@ jobs:
         run: |
           cp .config openwrt/.config
 
+      # 【新增1】强制关闭 geoview（在 defconfig 前）
+      - name: Disable geoview
+        run: |
+          cd openwrt
+
+          sed -i '/CONFIG_PACKAGE_geoview/d' .config
+          echo '# CONFIG_PACKAGE_geoview is not set' >> .config
+
       - name: Make defconfig and check important packages
         run: |
           cd openwrt
+
           make defconfig
+
+          # 【新增2】验证 geoview 没被自动拉回来
+          echo "===== CHECK GEOVIEW ====="
+          grep geoview .config || true
+
+          if grep -q "^CONFIG_PACKAGE_geoview=y" .config; then
+            echo "❌ geoview auto enabled"
+            exit 1
+          fi
 
           MISSING=0
 
@@ -121,11 +139,17 @@ jobs:
       - name: Build firmware with cache
         run: |
           cd openwrt
+
           export CCACHE_DIR="$PWD/.ccache"
+
           ccache -M 10G
           ccache -z
+
           make download -j$(nproc)
-          make -j$(nproc) CCACHE=1
+
+          # 【新增3】失败立刻停止
+          make -j$(nproc) CCACHE=1 || exit 1
+
           ccache -s
 
       - name: Upload firmware
