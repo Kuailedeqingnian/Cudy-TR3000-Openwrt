@@ -1,4 +1,4 @@
-name: Diagnose sing-box
+name: Build OpenWrt
 
 on:
   workflow_dispatch:
@@ -7,7 +7,7 @@ env:
   VERSION: "26.05.21-r${{ github.run_number }}"
 
 jobs:
-  diagnose:
+  build:
     runs-on: ubuntu-22.04
     timeout-minutes: 355
 
@@ -94,7 +94,7 @@ jobs:
           echo '# CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Geoview is not set' >> .config
           echo '# CONFIG_PACKAGE_geoview is not set' >> .config
 
-      - name: Make defconfig and check
+      - name: Make defconfig and check important packages
         run: |
           cd openwrt
           make defconfig
@@ -107,28 +107,50 @@ jobs:
             exit 1
           fi
 
-          echo "===== CHECK SING-BOX ====="
-          grep sing-box .config || true
+          MISSING=0
 
-          if ! grep -q "^CONFIG_PACKAGE_sing-box=y" .config; then
-            echo "❌ sing-box missing"
+          check_pkg() {
+            PKG="$1"
+            if grep -q "^CONFIG_PACKAGE_${PKG}=y" .config; then
+              echo "✅ ${PKG}"
+            else
+              echo "❌ ${PKG}"
+              MISSING=1
+            fi
+          }
+
+          check_pkg luci-base
+          check_pkg luci-theme-argon
+          check_pkg luci-app-argon-config
+          check_pkg luci-app-passwall
+          check_pkg sing-box
+          check_pkg kmod-usb-net-rndis
+          check_pkg kmod-usb-net-cdc-mbim
+          check_pkg kmod-usb-net-qmi-wwan
+
+          if [ "$MISSING" -eq 1 ]; then
+            echo "❌ Some required packages are missing."
             exit 1
           fi
 
-          echo "✅ Config check passed."
+          echo "✅ All required packages confirmed."
 
-      - name: Diagnose sing-box build
+      - name: Build firmware with cache
         run: |
           cd openwrt
           export CCACHE_DIR="$PWD/.ccache"
           ccache -M 10G
           ccache -z
+          make download -j4
 
-          make download -j$(nproc)
+          make -j4 CCACHE=1 || make -j1 V=s CCACHE=1
 
-          echo "===== START SING-BOX DETAILED BUILD ====="
-          make package/feeds/passwall_packages/sing-box/clean V=s
-          make package/feeds/passwall_packages/sing-box/compile -j1 V=s
-
-          echo "===== SING-BOX BUILD FINISHED ====="
           ccache -s
+
+      - name: Upload firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: Cudy-TR3000-OpenWrt-${{ env.VERSION }}
+          path: |
+            openwrt/bin/targets/mediatek/filogic/*.bin
+            openwrt/bin/targets/mediatek/filogic/*.manifest
