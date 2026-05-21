@@ -135,15 +135,24 @@ jobs:
 
           echo "✅ All required packages confirmed."
 
-      - name: Build firmware with cache
+      - name: Diagnose sing-box
         run: |
           cd openwrt
+
           export CCACHE_DIR="$PWD/.ccache"
+
           ccache -M 10G
           ccache -z
+
           make download -j4
 
-          make -j4 CCACHE=1 || make -j1 V=s CCACHE=1
+          echo "===== CLEAN SING-BOX ====="
+          make package/feeds/passwall_packages/sing-box/clean
+
+          echo "===== START SING-BOX ====="
+          make package/feeds/passwall_packages/sing-box/compile -j1 V=s
+
+          echo "===== FINISHED ====="
 
           ccache -s
 
