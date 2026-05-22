@@ -1,1 +1,32 @@
+Branch:
+temp-display
 
+Date:
+2026-05-23
+
+Base:
+TR3000稳定基准线V1
+
+Changes:
+- CPU温度显示
+- Wi-Fi温度显示
+- CPU信息显示
+- LuCI首页显示
+- rpcd接口扩展
+
+Compile:
+PASS
+
+BIN inspection:
+PASS
+
+Verified:
+Pending
+
+Notes:
+已确认以下文件进入BIN：
+
+/sbin/tempinfo
+/sbin/cpuinfo
+/usr/share/rpcd/ucode/luci
+/www/luci-static/resources/view/status/include/10_system.js
