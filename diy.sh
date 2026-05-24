@@ -45,28 +45,36 @@ fi
 
 extract_ipk() {
   PKG="$1"
+  ABS_PKG="$(readlink -f "$PKG")"
   TMPDIR="$(mktemp -d)"
 
   echo "Extracting: $PKG"
 
-  if ar t "$PKG" >/dev/null 2>&1; then
-    (cd "$TMPDIR" && ar x "$OLDPWD/$PKG")
-    DATA_FILE="$(find "$TMPDIR" -maxdepth 1 -name 'data.tar*' | head -n 1)"
-
-    if [ -z "$DATA_FILE" ]; then
-      echo "❌ No data.tar found in $PKG"
-      exit 1
-    fi
-
-    tar -xaf "$DATA_FILE" -C files
-
-  elif tar -tf "$PKG" >/dev/null 2>&1; then
-    tar -xaf "$PKG" -C files
-
+  if ar t "$ABS_PKG" >/dev/null 2>&1; then
+    echo "Format: ar ipk"
+    (cd "$TMPDIR" && ar x "$ABS_PKG")
+  elif tar -tf "$ABS_PKG" >/dev/null 2>&1; then
+    echo "Format: tar-wrapped ipk"
+    tar -xaf "$ABS_PKG" -C "$TMPDIR"
   else
     echo "❌ Unsupported ipk format: $PKG"
+    file "$ABS_PKG" || true
     exit 1
   fi
+
+  echo "Package inner files:"
+  find "$TMPDIR" -maxdepth 3 -type f | sort || true
+
+  DATA_FILE="$(find "$TMPDIR" -maxdepth 3 -type f -name 'data.tar*' | head -n 1)"
+
+  if [ -z "$DATA_FILE" ]; then
+    echo "❌ No data.tar found in $PKG"
+    find "$TMPDIR" -maxdepth 5 -type f | sort || true
+    exit 1
+  fi
+
+  echo "Extracting data archive: $DATA_FILE"
+  tar -xaf "$DATA_FILE" -C files
 
   rm -rf "$TMPDIR"
 }
@@ -83,11 +91,40 @@ find files/etc/init.d -type f -exec chmod +x {} \; 2>/dev/null || true
 
 echo "Checking injected PassWall files..."
 
-find files -iname '*passwall*' | head -50 || true
-find files -iname '*sing-box*' | head -20 || true
-find files -iname '*xray*' | head -20 || true
-find files -iname '*geoview*' | head -20 || true
-find files -iname '*v2ray-plugin*' | head -20 || true
+find files -iname '*passwall*' | head -80 || true
+find files -iname '*sing-box*' | head -30 || true
+find files -iname '*xray*' | head -30 || true
+find files -iname '*geoview*' | head -30 || true
+find files -iname '*v2ray-plugin*' | head -30 || true
+
+echo "Checking key files..."
+
+if ! find files -iname '*passwall*' | grep -q passwall; then
+  echo "❌ PassWall files not injected"
+  exit 1
+fi
+
+if ! find files -iname '*sing-box*' | grep -q sing-box; then
+  echo "❌ sing-box files not injected"
+  exit 1
+fi
+
+if ! find files -iname '*xray*' | grep -q xray; then
+  echo "❌ xray files not injected"
+  exit 1
+fi
+
+if ! find files -iname '*geoview*' | grep -q geoview; then
+  echo "❌ geoview files not injected"
+  exit 1
+fi
+
+if ! find files -iname '*v2ray-plugin*' | grep -q v2ray-plugin; then
+  echo "❌ v2ray-plugin files not injected"
+  exit 1
+fi
+
+echo "✅ PassWall files injected successfully."
 
 echo "PassWall 26.4.15 fixed IPK injection done."
 
