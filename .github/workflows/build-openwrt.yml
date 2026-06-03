@@ -105,6 +105,13 @@ jobs:
           check_pkg luci-base
           check_pkg luci-theme-argon
           check_pkg luci-app-argon-config
+
+          check_pkg luci-i18n-base-zh-cn
+          check_pkg luci-i18n-firewall-zh-cn
+          check_pkg luci-i18n-package-manager-zh-cn
+          check_pkg luci-i18n-samba4-zh-cn
+
+
           check_pkg kmod-usb-net-rndis
           check_pkg kmod-usb-net-cdc-mbim
           check_pkg kmod-usb-net-qmi-wwan
