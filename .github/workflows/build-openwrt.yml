@@ -111,7 +111,6 @@ jobs:
           check_pkg luci-i18n-package-manager-zh-cn
           check_pkg luci-i18n-samba4-zh-cn
 
-          check_pkg luci-app-adguardhome
 
           check_pkg kmod-usb-net-rndis
           check_pkg kmod-usb-net-cdc-mbim
