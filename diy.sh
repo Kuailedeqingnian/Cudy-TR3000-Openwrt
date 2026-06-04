@@ -26,4 +26,43 @@ exit 0
 EOF
 chmod +x files/etc/uci-defaults/99-default-argon
 
+echo "Adding TR3000 status info..."
+
+mkdir -p files/etc/profile.d
+mkdir -p package/base-files/files/etc/profile.d
+
+cat > package/base-files/files/etc/profile.d/tr3000-info.sh <<'EOF'
+#!/bin/sh
+
+CPU_FREQ="Unknown"
+
+for f in \
+/sys/devices/system/cpu/cpufreq/policy0/scaling_cur_freq \
+/sys/devices/system/cpu/cpufreq/policy0/cpuinfo_cur_freq
+do
+    if [ -f "$f" ]; then
+        CPU_FREQ="$(expr $(cat "$f") / 1000) MHz"
+        break
+    fi
+done
+
+ONLINE_DEVICES=$(awk 'NF >=4 {print $2}' /tmp/dhcp.leases 2>/dev/null | sort -u | wc -l)
+
+echo ""
+echo "========== TR3000 System Info =========="
+echo "CPU Frequency : $CPU_FREQ"
+echo "Online Devices: $ONLINE_DEVICES"
+echo "========================================"
+echo ""
+
+EOF
+
+chmod +x package/base-files/files/etc/profile.d/tr3000-info.sh
+cp package/base-files/files/etc/profile.d/tr3000-info.sh files/etc/profile.d/tr3000-info.sh
+chmod +x files/etc/profile.d/tr3000-info.sh
+
+echo "TR3000 status file check:"
+ls -l files/etc/profile.d/tr3000-info.sh
+ls -l package/base-files/files/etc/profile.d/tr3000-info.sh
+
 echo "DIY script done."
