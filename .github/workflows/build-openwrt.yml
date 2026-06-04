@@ -81,6 +81,20 @@ jobs:
           chmod +x diy.sh
           ./diy.sh
 
+      - name: Check TR3000 status file
+        run: |
+          cd openwrt
+          echo "Check files path:"
+          ls -l files/etc/profile.d || true
+          cat files/etc/profile.d/tr3000-info.sh || true
+
+          echo "Check base-files path:"
+          ls -l package/base-files/files/etc/profile.d || true
+          cat package/base-files/files/etc/profile.d/tr3000-info.sh || true
+
+          test -f files/etc/profile.d/tr3000-info.sh
+          test -f package/base-files/files/etc/profile.d/tr3000-info.sh
+
       - name: Load custom config
         run: |
           cp .config openwrt/.config
@@ -111,6 +125,14 @@ jobs:
           check_pkg luci-i18n-package-manager-zh-cn
           check_pkg luci-i18n-samba4-zh-cn
 
+          check_pkg ttyd
+          check_pkg luci-app-ttyd
+          check_pkg luci-i18n-ttyd-zh-cn
+
+          check_pkg luci-app-ddns
+          check_pkg luci-app-wol
+          check_pkg luci-app-upnp
+          check_pkg luci-app-nlbwmon
 
           check_pkg kmod-usb-net-rndis
           check_pkg kmod-usb-net-cdc-mbim
@@ -122,6 +144,16 @@ jobs:
           fi
 
           echo "✅ All required packages confirmed."
+
+      - name: Check TR3000 status file after defconfig
+        run: |
+          cd openwrt
+          echo "Check status file after defconfig:"
+          test -f files/etc/profile.d/tr3000-info.sh
+          test -f package/base-files/files/etc/profile.d/tr3000-info.sh
+          grep -q "TR3000 System Info" files/etc/profile.d/tr3000-info.sh
+          grep -q "TR3000 System Info" package/base-files/files/etc/profile.d/tr3000-info.sh
+          echo "✅ TR3000 status file still exists after defconfig."
 
       - name: Build firmware with cache
         run: |
