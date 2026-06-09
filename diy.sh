@@ -63,11 +63,33 @@ do
     fi
 done
 
+read_temp() {
+    local path="$1"
+    local value
+
+    if [ -f "$path" ]; then
+        value="$(cat "$path" 2>/dev/null)"
+        if [ -n "$value" ]; then
+            awk "BEGIN {printf \"%.1f°C\", $value / 1000}"
+            return 0
+        fi
+    fi
+
+    echo "Unknown"
+}
+
+CPU_TEMP="$(read_temp /sys/class/thermal/thermal_zone0/temp)"
+WIFI24_TEMP="$(read_temp /sys/devices/platform/soc/18000000.wifi/ieee80211/phy0/hwmon2/temp1_input)"
+WIFI5_TEMP="$(read_temp /sys/devices/platform/soc/18000000.wifi/ieee80211/phy1/hwmon3/temp1_input)"
+
 ONLINE_DEVICES=$(awk 'NF >=4 {print $2}' /tmp/dhcp.leases 2>/dev/null | sort -u | wc -l)
 
 echo ""
 echo "========== TR3000 System Info =========="
 echo "CPU Frequency : $CPU_FREQ"
+echo "CPU Temp      : $CPU_TEMP"
+echo "WiFi 2.4G Temp: $WIFI24_TEMP"
+echo "WiFi 5G Temp  : $WIFI5_TEMP"
 echo "Online Devices: $ONLINE_DEVICES"
 echo "========================================"
 echo ""
@@ -81,6 +103,45 @@ chmod +x files/etc/profile.d/tr3000-info.sh
 echo "TR3000 status file check:"
 ls -l files/etc/profile.d/tr3000-info.sh
 ls -l package/base-files/files/etc/profile.d/tr3000-info.sh
+
+echo "Checking TR3000 temperature display patch..."
+
+grep "CPU Temp" files/etc/profile.d/tr3000-info.sh >/dev/null || {
+  echo "❌ CPU temperature display missing in files path"
+  exit 1
+}
+
+grep "WiFi 2.4G Temp" files/etc/profile.d/tr3000-info.sh >/dev/null || {
+  echo "❌ WiFi 2.4G temperature display missing in files path"
+  exit 1
+}
+
+grep "WiFi 5G Temp" files/etc/profile.d/tr3000-info.sh >/dev/null || {
+  echo "❌ WiFi 5G temperature display missing in files path"
+  exit 1
+}
+
+grep "thermal_zone0/temp" files/etc/profile.d/tr3000-info.sh >/dev/null || {
+  echo "❌ CPU temperature source missing in files path"
+  exit 1
+}
+
+grep "phy0/hwmon2/temp1_input" files/etc/profile.d/tr3000-info.sh >/dev/null || {
+  echo "❌ WiFi 2.4G temperature source missing in files path"
+  exit 1
+}
+
+grep "phy1/hwmon3/temp1_input" files/etc/profile.d/tr3000-info.sh >/dev/null || {
+  echo "❌ WiFi 5G temperature source missing in files path"
+  exit 1
+}
+
+grep "CPU Temp" package/base-files/files/etc/profile.d/tr3000-info.sh >/dev/null || {
+  echo "❌ CPU temperature display missing in base-files path"
+  exit 1
+}
+
+echo "✅ TR3000 CPU/WiFi temperature display patch confirmed."
 
 echo "Adding PassWall 26.4.15 fixed IPK files..."
 
