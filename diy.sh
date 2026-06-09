@@ -184,6 +184,18 @@ fi
 echo "✅ PassWall files injected successfully."
 echo "PassWall 26.4.15 fixed IPK injection done."
 
+echo "Checking Hysteria2 injection..."
+
+if [ ! -f files/usr/bin/hysteria ]; then
+  echo "❌ Hysteria2 not injected."
+  exit 1
+fi
+
+chmod +x files/usr/bin/hysteria
+
+echo "✅ Hysteria2 injected successfully."
+
+
 echo "Patching PassWall subscribe.lua user-agent fallback only..."
 
 SUBSCRIBE_LUA="$(find files -path '*/usr/share/passwall/subscribe.lua' -type f | head -n 1)"
