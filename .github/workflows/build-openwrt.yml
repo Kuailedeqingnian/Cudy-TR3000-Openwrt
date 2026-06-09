@@ -288,6 +288,15 @@ jobs:
 
           echo "✅ PassWall injected files still exist after defconfig."
 
+
+      - name: Check Hysteria2 injection
+        run: |
+          cd openwrt
+          if [ ! -f files/usr/bin/hysteria ]; then
+            echo "❌ Hysteria2 binary missing"
+            exit 1
+          fi
+          echo "✅ Hysteria2 binary confirmed."
       - name: Build firmware with cache
         run: |
           cd openwrt
