@@ -317,6 +317,28 @@ jobs:
             exit 1
           fi
           echo "✅ Hysteria2 binary confirmed."
+      - name: Check PassWall version registration fix
+        run: |
+          cd openwrt
+
+          echo "===== CHECK PASSWALL VERSION REGISTRATION FIX ====="
+
+          test -f files/etc/uci-defaults/98-passwall-version-fix || {
+            echo "❌ PassWall version fix script missing"
+            exit 1
+          }
+
+          grep -q "Package: luci-app-passwall" files/etc/uci-defaults/98-passwall-version-fix || {
+            echo "❌ luci-app-passwall registration missing"
+            exit 1
+          }
+
+          grep -q "Version: 26.4.15" files/etc/uci-defaults/98-passwall-version-fix || {
+            echo "❌ PassWall version 26.4.15 registration missing"
+            exit 1
+          }
+
+          echo "✅ PassWall version registration fix confirmed."
       - name: Build firmware with cache
         run: |
           cd openwrt
