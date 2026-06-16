@@ -203,6 +203,7 @@ jobs:
           check_pkg luci-app-wol
           check_pkg luci-app-upnp
           check_pkg luci-app-nlbwmon
+          check_pkg luci-app-adguardhome
 
           check_pkg kmod-usb-net-rndis
           check_pkg kmod-usb-net-cdc-mbim
@@ -230,6 +231,19 @@ jobs:
 
           echo "✅ All required packages confirmed."
 
+      - name: Check R63 AdGuardHome LuCI menu package
+        run: |
+          cd openwrt
+
+          echo "===== CHECK R63 ADGUARDHOME LUCI MENU PACKAGE ====="
+
+          grep -q "^CONFIG_PACKAGE_luci-app-adguardhome=y" .config || {
+            echo "❌ luci-app-adguardhome config missing"
+            exit 1
+          }
+
+          echo "✅ AdGuardHome LuCI menu config confirmed."
+
       - name: Check TR3000 status file after defconfig
         run: |
           cd openwrt
@@ -238,7 +252,13 @@ jobs:
           test -f package/base-files/files/etc/profile.d/tr3000-info.sh
           grep -q "TR3000 System Info" files/etc/profile.d/tr3000-info.sh
           grep -q "TR3000 System Info" package/base-files/files/etc/profile.d/tr3000-info.sh
-          echo "✅ TR3000 status file still exists after defconfig."
+          grep -q "CPU Temp" files/etc/profile.d/tr3000-info.sh
+          grep -q "WiFi 2.4G Temp" files/etc/profile.d/tr3000-info.sh
+          grep -q "WiFi 5G Temp" files/etc/profile.d/tr3000-info.sh
+          grep -q "thermal_zone0/temp" files/etc/profile.d/tr3000-info.sh
+          grep -q "phy0/hwmon2/temp1_input" files/etc/profile.d/tr3000-info.sh
+          grep -q "phy1/hwmon3/temp1_input" files/etc/profile.d/tr3000-info.sh
+          echo "✅ TR3000 status and temperature display still exist after defconfig."
 
       - name: Check injected PassWall files after defconfig
         run: |
