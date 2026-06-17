@@ -258,7 +258,32 @@ jobs:
           grep -q "thermal_zone0/temp" files/etc/profile.d/tr3000-info.sh
           grep -q "phy0/hwmon2/temp1_input" files/etc/profile.d/tr3000-info.sh
           grep -q "phy1/hwmon3/temp1_input" files/etc/profile.d/tr3000-info.sh
+
+          if grep -q "CPU Frequency" files/etc/profile.d/tr3000-info.sh; then
+            echo "❌ CPU Frequency should be removed from TR3000 status info"
+            exit 1
+          fi
+
           echo "✅ TR3000 status and temperature display still exist after defconfig."
+
+      - name: Check LuCI overview temperature files after defconfig
+        run: |
+          cd openwrt
+
+          echo "===== CHECK LUCI OVERVIEW TEMPERATURE FILES ====="
+
+          test -f files/www/luci-static/resources/view/status/include/35_tr3000_temperature.js
+          test -f files/usr/share/rpcd/acl.d/tr3000-temperature.json
+
+          grep -q "TR3000 Temperature" files/www/luci-static/resources/view/status/include/35_tr3000_temperature.js
+          grep -q "CPU Temperature" files/www/luci-static/resources/view/status/include/35_tr3000_temperature.js
+          grep -q "WiFi 2.4G Temperature" files/www/luci-static/resources/view/status/include/35_tr3000_temperature.js
+          grep -q "WiFi 5G Temperature" files/www/luci-static/resources/view/status/include/35_tr3000_temperature.js
+          grep -q "thermal_zone0/temp" files/www/luci-static/resources/view/status/include/35_tr3000_temperature.js
+          grep -q "phy0/hwmon2/temp1_input" files/www/luci-static/resources/view/status/include/35_tr3000_temperature.js
+          grep -q "phy1/hwmon3/temp1_input" files/www/luci-static/resources/view/status/include/35_tr3000_temperature.js
+
+          echo "✅ LuCI overview temperature files confirmed."
 
       - name: Check injected PassWall files after defconfig
         run: |
