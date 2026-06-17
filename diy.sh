@@ -288,4 +288,63 @@ fi
 echo "✅ PassWall subscribe.lua user-agent fallback patch applied."
 grep -n 'passwall/' "$SUBSCRIBE_LUA" || true
 
+echo "Adding PassWall opkg version registration fix..."
+
+mkdir -p files/etc/uci-defaults
+
+cat > files/etc/uci-defaults/98-passwall-version-fix <<'EOF'
+#!/bin/sh
+
+STATUS_FILE="/usr/lib/opkg/status"
+INFO_DIR="/usr/lib/opkg/info"
+
+mkdir -p "$INFO_DIR"
+touch "$STATUS_FILE"
+
+if ! grep -q "^Package: luci-app-passwall$" "$STATUS_FILE"; then
+cat >> "$STATUS_FILE" <<EOF_STATUS
+
+Package: luci-app-passwall
+Version: 26.4.15
+Depends: libc, luci-base
+Status: install ok installed
+Architecture: all
+Installed-Time: $(date +%s)
+Description: LuCI support for PassWall
+EOF_STATUS
+fi
+
+cat > "$INFO_DIR/luci-app-passwall.control" <<'EOF_CONTROL'
+Package: luci-app-passwall
+Version: 26.4.15
+Depends: libc, luci-base
+Status: install ok installed
+Architecture: all
+Description: LuCI support for PassWall
+EOF_CONTROL
+
+exit 0
+EOF
+
+chmod +x files/etc/uci-defaults/98-passwall-version-fix
+
+echo "Checking PassWall opkg version registration fix..."
+
+test -f files/etc/uci-defaults/98-passwall-version-fix || {
+  echo "❌ PassWall version fix uci-defaults script missing"
+  exit 1
+}
+
+grep "Package: luci-app-passwall" files/etc/uci-defaults/98-passwall-version-fix >/dev/null || {
+  echo "❌ luci-app-passwall package registration missing"
+  exit 1
+}
+
+grep "Version: 26.4.15" files/etc/uci-defaults/98-passwall-version-fix >/dev/null || {
+  echo "❌ luci-app-passwall version registration missing"
+  exit 1
+}
+
+echo "✅ PassWall opkg version registration fix confirmed."
+
 echo "DIY script done."
