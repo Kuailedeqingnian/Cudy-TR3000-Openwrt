@@ -51,18 +51,6 @@ mkdir -p package/base-files/files/etc/profile.d
 cat > package/base-files/files/etc/profile.d/tr3000-info.sh <<'EOF'
 #!/bin/sh
 
-CPU_FREQ="Unknown"
-
-for f in \
-/sys/devices/system/cpu/cpufreq/policy0/scaling_cur_freq \
-/sys/devices/system/cpu/cpufreq/policy0/cpuinfo_cur_freq
-do
-    if [ -f "$f" ]; then
-        CPU_FREQ="$(expr $(cat "$f") / 1000) MHz"
-        break
-    fi
-done
-
 read_temp() {
     local path="$1"
     local value
@@ -86,7 +74,6 @@ ONLINE_DEVICES=$(awk 'NF >=4 {print $2}' /tmp/dhcp.leases 2>/dev/null | sort -u 
 
 echo ""
 echo "========== TR3000 System Info =========="
-echo "CPU Frequency : $CPU_FREQ"
 echo "CPU Temp      : $CPU_TEMP"
 echo "WiFi 2.4G Temp: $WIFI24_TEMP"
 echo "WiFi 5G Temp  : $WIFI5_TEMP"
@@ -142,6 +129,107 @@ grep "CPU Temp" package/base-files/files/etc/profile.d/tr3000-info.sh >/dev/null
 }
 
 echo "✅ TR3000 CPU/WiFi temperature display patch confirmed."
+
+echo "Adding TR3000 LuCI overview temperature display..."
+
+mkdir -p files/www/luci-static/resources/view/status/include
+mkdir -p files/usr/share/rpcd/acl.d
+
+cat > files/www/luci-static/resources/view/status/include/35_tr3000_temperature.js <<'EOF'
+'use strict';
+'require baseclass';
+'require fs';
+
+function formatTemp(value) {
+    var n = parseInt((value || '').trim(), 10);
+    if (isNaN(n))
+        return _('Unknown');
+    return (n / 1000).toFixed(1) + ' °C';
+}
+
+return baseclass.extend({
+    title: _('TR3000 Temperature'),
+
+    load: function() {
+        return Promise.all([
+            L.resolveDefault(fs.read_direct('/sys/class/thermal/thermal_zone0/temp'), ''),
+            L.resolveDefault(fs.read_direct('/sys/devices/platform/soc/18000000.wifi/ieee80211/phy0/hwmon2/temp1_input'), ''),
+            L.resolveDefault(fs.read_direct('/sys/devices/platform/soc/18000000.wifi/ieee80211/phy1/hwmon3/temp1_input'), '')
+        ]);
+    },
+
+    render: function(data) {
+        var table = E('table', { 'class': 'table' }, [
+            E('tr', { 'class': 'tr' }, [
+                E('td', { 'class': 'td left', 'width': '33%' }, _('CPU Temperature')),
+                E('td', { 'class': 'td left' }, formatTemp(data[0]))
+            ]),
+            E('tr', { 'class': 'tr' }, [
+                E('td', { 'class': 'td left', 'width': '33%' }, _('WiFi 2.4G Temperature')),
+                E('td', { 'class': 'td left' }, formatTemp(data[1]))
+            ]),
+            E('tr', { 'class': 'tr' }, [
+                E('td', { 'class': 'td left', 'width': '33%' }, _('WiFi 5G Temperature')),
+                E('td', { 'class': 'td left' }, formatTemp(data[2]))
+            ])
+        ]);
+
+        return E('div', { 'class': 'cbi-section' }, [
+            E('h3', _('TR3000 Temperature')),
+            table
+        ]);
+    }
+});
+EOF
+
+cat > files/usr/share/rpcd/acl.d/tr3000-temperature.json <<'EOF'
+{
+  "luci-app-tr3000-temperature": {
+    "description": "Grant LuCI access to TR3000 temperature sensors",
+    "read": {
+      "file": {
+        "/sys/class/thermal/thermal_zone0/temp": [ "read" ],
+        "/sys/devices/platform/soc/18000000.wifi/ieee80211/phy0/hwmon2/temp1_input": [ "read" ],
+        "/sys/devices/platform/soc/18000000.wifi/ieee80211/phy1/hwmon3/temp1_input": [ "read" ]
+      }
+    }
+  }
+}
+EOF
+
+echo "Checking TR3000 LuCI overview temperature display..."
+
+test -f files/www/luci-static/resources/view/status/include/35_tr3000_temperature.js || {
+  echo "❌ TR3000 LuCI overview temperature JS missing"
+  exit 1
+}
+
+test -f files/usr/share/rpcd/acl.d/tr3000-temperature.json || {
+  echo "❌ TR3000 temperature rpcd ACL missing"
+  exit 1
+}
+
+grep "TR3000 Temperature" files/www/luci-static/resources/view/status/include/35_tr3000_temperature.js >/dev/null || {
+  echo "❌ TR3000 LuCI overview temperature title missing"
+  exit 1
+}
+
+grep "thermal_zone0/temp" files/www/luci-static/resources/view/status/include/35_tr3000_temperature.js >/dev/null || {
+  echo "❌ TR3000 LuCI overview CPU temperature source missing"
+  exit 1
+}
+
+grep "phy0/hwmon2/temp1_input" files/www/luci-static/resources/view/status/include/35_tr3000_temperature.js >/dev/null || {
+  echo "❌ TR3000 LuCI overview WiFi 2.4G temperature source missing"
+  exit 1
+}
+
+grep "phy1/hwmon3/temp1_input" files/www/luci-static/resources/view/status/include/35_tr3000_temperature.js >/dev/null || {
+  echo "❌ TR3000 LuCI overview WiFi 5G temperature source missing"
+  exit 1
+}
+
+echo "✅ TR3000 LuCI overview temperature display confirmed."
 
 echo "Adding PassWall 26.4.15 fixed IPK files..."
 
